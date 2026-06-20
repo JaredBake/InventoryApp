@@ -1,0 +1,46 @@
+name: inventory_app
+description: A barcode-scanning inventory management app built with Flutter and C++.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Barcode / QR scanning via device camera
+  mobile_scanner: ^5.2.3
+
+  # Local SQLite database
+  sqflite: ^2.3.3+1
+
+  # Access to device file-system paths (for DB location)
+  path_provider: ^2.1.4
+
+  # Lightweight state management
+  provider: ^6.1.2
+
+  # C FFI support (dart:ffi is built-in; this package adds helpers)
+  ffi: ^2.1.3
+
+  # Swipe-to-delete / swipe actions on list tiles
+  flutter_slidable: ^3.1.1
+
+  # UUID generation for item / list IDs
+  uuid: ^4.5.1
+
+  # Date formatting
+  intl: ^0.19.0
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
