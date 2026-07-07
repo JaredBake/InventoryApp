@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'dart:io';
 
 import 'providers/inventory_provider.dart';
 import 'providers/custom_lists_provider.dart';
@@ -9,6 +11,12 @@ import 'services/inventory_ffi_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // sqflite uses a different factory on desktop platforms.
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
 
   // Load the C++ shared library.
   final ffi = InventoryFfiService()..load();
@@ -41,7 +49,7 @@ class InventoryApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2563EB),
+          seedColor: const Color(0xFF006064),
         ),
         useMaterial3: true,
       ),

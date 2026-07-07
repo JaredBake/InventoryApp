@@ -4,6 +4,8 @@ project(inventory_ffi VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(ENABLE_SANITIZERS "Enable ASan/UBSan for native targets" OFF)
+
 # ── shared library used by Flutter FFI ───────────────────────────────────────
 add_library(inventory SHARED
     src/inventory_api.cpp
@@ -12,6 +14,13 @@ add_library(inventory SHARED
 target_include_directories(inventory
     PUBLIC  include
 )
+
+if(ENABLE_SANITIZERS)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(inventory PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+        target_link_options(inventory PRIVATE -fsanitize=address,undefined)
+    endif()
+endif()
 
 # Strip unused symbols on non-Debug builds
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -29,4 +38,10 @@ if(BUILD_TESTS)
     )
     target_include_directories(inventory_tests PRIVATE include)
     target_link_libraries(inventory_tests PRIVATE inventory)
+    if(ENABLE_SANITIZERS)
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+            target_compile_options(inventory_tests PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+            target_link_options(inventory_tests PRIVATE -fsanitize=address,undefined)
+        endif()
+    endif()
 endif()

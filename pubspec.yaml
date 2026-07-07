@@ -16,6 +16,9 @@ dependencies:
   # Local SQLite database
   sqflite: ^2.3.3+1
 
+  # SQLite backend for desktop (Windows/macOS/Linux)
+  sqflite_common_ffi: ^2.3.3
+
   # Access to device file-system paths (for DB location)
   path_provider: ^2.1.4
 

@@ -10,8 +10,23 @@
 static std::string to_lower(const char* s) {
     std::string out(s);
     std::transform(out.begin(), out.end(), out.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return out;
+}
+
+static void copy_truncated(char* dest, size_t dest_len, const char* src) {
+    if (!dest || dest_len == 0) return;
+    if (!src) {
+        dest[0] = '\0';
+        return;
+    }
+
+#if defined(_MSC_VER)
+    strncpy_s(dest, dest_len, src, _TRUNCATE);
+#else
+    std::strncpy(dest, src, dest_len - 1);
+    dest[dest_len - 1] = '\0';
+#endif
 }
 
 static bool contains_ci(const char* haystack, const char* needle) {
@@ -124,8 +139,7 @@ int32_t inventory_match_lists(const CItem* item,  const CRule* rules,
         }
         if (hit) {
             char* slot = out_list_ids + matched * ITEM_ID_LEN;
-            std::strncpy(slot, rule.list_id, ITEM_ID_LEN - 1);
-            slot[ITEM_ID_LEN - 1] = '\0';
+            copy_truncated(slot, ITEM_ID_LEN, rule.list_id);
             ++matched;
         }
     }
