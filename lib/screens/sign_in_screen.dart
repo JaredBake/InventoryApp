@@ -194,8 +194,8 @@ class _SignInScreenState extends State<SignInScreen> {
                                   .surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Text(
-                              'This first pass stores sign-in state locally so the flow can be exercised now. The auth service is isolated and can be swapped to Supabase next.',
+                              child: const Text(
+                                'This screen uses Supabase when the app is launched with SUPABASE_URL and SUPABASE_ANON_KEY. Otherwise it falls back to the local dev auth store.',
                             ),
                           ),
                         ],

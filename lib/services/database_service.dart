@@ -6,23 +6,48 @@ import '../models/custom_list_model.dart';
 
 /// Manages all SQLite persistence for the app.
 class DatabaseService {
-  static const _dbName = 'inventory.db';
+  static const _guestDbName = 'inventory_guest.db';
   static const _dbVersion = 1;
 
   Database? _db;
+  String _scopeKey = '';
 
   Future<Database> get db async {
     _db ??= await _openDatabase();
     return _db!;
   }
 
+  Future<void> setScopeKey(String? scopeKey) async {
+    final normalized = _normalizeScopeKey(scopeKey);
+    if (_scopeKey == normalized) {
+      return;
+    }
+
+    await close();
+    _scopeKey = normalized;
+  }
+
   Future<Database> _openDatabase() async {
-    final dbPath = path.join(await getDatabasesPath(), _dbName);
+    final dbName = _scopeKey.isEmpty
+        ? _guestDbName
+        : 'inventory_${_scopeKey}.db';
+    final dbPath = path.join(await getDatabasesPath(), dbName);
     return openDatabase(
       dbPath,
       version: _dbVersion,
       onCreate: _onCreate,
     );
+  }
+
+  String _normalizeScopeKey(String? scopeKey) {
+    final value = scopeKey?.trim().toLowerCase() ?? '';
+    if (value.isEmpty) {
+      return '';
+    }
+
+    return value
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
   }
 
   Future<void> _onCreate(Database db, int version) async {

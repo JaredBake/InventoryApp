@@ -28,6 +28,11 @@ class CustomListsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearLists() {
+    _lists = [];
+    notifyListeners();
+  }
+
   // ── CRUD (lists) ───────────────────────────────────────────────────────────
 
   Future<void> addList(CustomList list) async {

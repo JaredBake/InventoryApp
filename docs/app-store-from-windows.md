@@ -75,3 +75,13 @@ If you want account sign-in and cloud sync, start with:
 
 - Cloud architecture plan: `docs/cloud-architecture-plan.md`
 - Starter SQL schema: `docs/supabase-schema.sql`
+
+## Supabase sign-in setup
+
+To run the new sign-in flow against real accounts, launch Flutter with your Supabase project values:
+
+```bash
+flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=your-anon-key
+```
+
+If those values are not provided, the app uses the local development auth store so the UI still launches on Windows.

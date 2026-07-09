@@ -43,6 +43,17 @@ class InventoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearItems() {
+    _allItems = [];
+    _displayItems = [];
+    _categories = [];
+    _sortField = SortField.name;
+    _ascending = true;
+    _searchQuery = '';
+    _filterCat = '';
+    notifyListeners();
+  }
+
   // ── CRUD ───────────────────────────────────────────────────────────────────
 
   Future<void> addItem(Item item) async {
