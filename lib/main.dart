@@ -5,6 +5,8 @@ import 'dart:io';
 
 import 'providers/inventory_provider.dart';
 import 'providers/custom_lists_provider.dart';
+import 'repositories/database_custom_lists_repository.dart';
+import 'repositories/database_inventory_repository.dart';
 import 'screens/home_screen.dart';
 import 'services/database_service.dart';
 import 'services/inventory_ffi_service.dart';
@@ -23,15 +25,23 @@ Future<void> main() async {
 
   // Open (or create) the local database.
   final db = DatabaseService();
+  final inventoryRepository = DatabaseInventoryRepository(db);
+  final customListsRepository = DatabaseCustomListsRepository(db);
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => InventoryProvider(db: db, ffi: ffi),
+          create: (_) => InventoryProvider(
+            repository: inventoryRepository,
+            ffi: ffi,
+          ),
         ),
         ChangeNotifierProvider(
-          create: (_) => CustomListsProvider(db: db, ffi: ffi),
+          create: (_) => CustomListsProvider(
+            repository: customListsRepository,
+            ffi: ffi,
+          ),
         ),
       ],
       child: const InventoryApp(),

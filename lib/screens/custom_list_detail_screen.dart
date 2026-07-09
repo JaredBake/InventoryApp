@@ -55,6 +55,13 @@ class _CustomListDetailScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(list.name),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: _refreshList,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabs,
           tabs: const [
@@ -66,7 +73,7 @@ class _CustomListDetailScreenState
       body: TabBarView(
         controller: _tabs,
         children: [
-          _buildItemsTab(),
+          _buildItemsTab(context, list),
           _buildRulesTab(context, list, provider),
         ],
       ),
@@ -87,26 +94,39 @@ class _CustomListDetailScreenState
 
   // ── Items tab ──────────────────────────────────────────────────────────────
 
-  Widget _buildItemsTab() {
+  Widget _buildItemsTab(BuildContext context, CustomList list) {
     if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_listItems.isEmpty) {
-      return EmptyState(
-        icon: Icons.inventory_2_outlined,
-        message:
-            'No items in this list yet.\nAdd rules to auto-populate it.',
-        actionLabel: 'Add rule',
-        onAction: () => _tabs.animateTo(1),
-      );
-    }
-    return ListView.builder(
-      itemCount: _listItems.length,
-      itemBuilder: (_, i) => ItemCard(
-        item: _listItems[i],
-        onTap: () {},
-        onEdit: () {},
-        onDelete: () {},
-        onAdjustQuantity: (_) {},
-        compact: true,
+
+    return RefreshIndicator(
+      onRefresh: _refreshList,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: _listItems.isEmpty ? 1 : _listItems.length,
+        itemBuilder: (_, i) {
+          if (_listItems.isEmpty) {
+            return SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: Center(
+                child: EmptyState(
+                  icon: Icons.inventory_2_outlined,
+                  message:
+                      'No items in this list yet.\nAdd rules to auto-populate it.',
+                  actionLabel: 'Add rule',
+                  onAction: () => _tabs.animateTo(1),
+                ),
+              ),
+            );
+          }
+
+          return ItemCard(
+            item: _listItems[i],
+            onTap: () {},
+            onEdit: () {},
+            onDelete: () {},
+            onAdjustQuantity: (_) {},
+            compact: true,
+          );
+        },
       ),
     );
   }
@@ -214,6 +234,23 @@ class _CustomListDetailScreenState
         return 'Keyword (e.g. milk)';
       case MatchType.nameStartsWith:
         return 'Prefix (e.g. Organic)';
+    }
+  }
+
+  Future<void> _refreshList() async {
+    setState(() {
+      _loading = true;
+    });
+
+    await Future.wait([
+      _loadItems(),
+      context.read<CustomListsProvider>().loadLists(),
+    ]);
+
+    if (mounted) {
+      setState(() {
+        _loading = false;
+      });
     }
   }
 }

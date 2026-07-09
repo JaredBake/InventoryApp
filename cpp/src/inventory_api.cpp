@@ -74,7 +74,26 @@ void inventory_sort_items(CItem* items, int32_t count,
                 less_than = to_lower(a.name) < to_lower(b.name);
                 break;
         }
-        return ascending ? less_than : !less_than;
+        if (ascending) {
+            return less_than;
+        }
+
+        switch (sort_field) {
+            case SORT_NAME:
+                return to_lower(a.name) > to_lower(b.name);
+            case SORT_CATEGORY:
+                return to_lower(a.category) > to_lower(b.category);
+            case SORT_QUANTITY:
+                return a.quantity > b.quantity;
+            case SORT_PRICE:
+                return a.price > b.price;
+            case SORT_DATE_ADDED:
+                return a.date_added > b.date_added;
+            case SORT_BARCODE:
+                return to_lower(a.barcode) > to_lower(b.barcode);
+            default:
+                return to_lower(a.name) > to_lower(b.name);
+        }
     };
 
     std::sort(items, items + count, cmp);

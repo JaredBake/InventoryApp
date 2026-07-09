@@ -2,20 +2,20 @@ import 'package:flutter/foundation.dart';
 
 import '../models/custom_list_model.dart';
 import '../models/item.dart';
-import '../services/database_service.dart';
+import '../repositories/custom_lists_repository.dart';
 import '../services/inventory_ffi_service.dart';
 
 /// Holds all custom lists and manages their rules / item membership.
 class CustomListsProvider extends ChangeNotifier {
-  final DatabaseService    _db;
+  final CustomListsRepository _repository;
   final InventoryFfiService _ffi;
 
   List<CustomList> _lists = [];
 
   CustomListsProvider({
-    required DatabaseService    db,
+    required CustomListsRepository repository,
     required InventoryFfiService ffi,
-  })  : _db  = db,
+  })  : _repository = repository,
         _ffi = ffi;
 
   List<CustomList> get lists => _lists;
@@ -23,43 +23,60 @@ class CustomListsProvider extends ChangeNotifier {
   // ── Init ───────────────────────────────────────────────────────────────────
 
   Future<void> loadLists() async {
-    _lists = await _db.getAllCustomLists();
+    _lists = await _repository.getAllCustomLists();
+    _sortListsByName();
     notifyListeners();
   }
 
   // ── CRUD (lists) ───────────────────────────────────────────────────────────
 
   Future<void> addList(CustomList list) async {
-    await _db.insertCustomList(list);
-    await loadLists();
+    await _repository.insertCustomList(list);
+    _lists.add(list);
+    _sortListsByName();
+    notifyListeners();
   }
 
   Future<void> updateList(CustomList list) async {
-    await _db.updateCustomList(list);
-    await loadLists();
+    await _repository.updateCustomList(list);
+    final index = _lists.indexWhere((existing) => existing.id == list.id);
+    if (index >= 0) {
+      _lists[index] = list;
+    } else {
+      _lists.add(list);
+    }
+    _sortListsByName();
+    notifyListeners();
   }
 
   Future<void> deleteList(String id) async {
-    await _db.deleteCustomList(id);
-    await loadLists();
+    await _repository.deleteCustomList(id);
+    _lists.removeWhere((list) => list.id == id);
+    notifyListeners();
   }
 
   // ── Rules ──────────────────────────────────────────────────────────────────
 
   Future<void> addRule(ListRule rule) async {
-    await _db.insertRule(rule);
-    await loadLists();
+    await _repository.insertRule(rule);
+    final list = _lists.firstWhere((candidate) => candidate.id == rule.listId);
+    list.rules.add(rule);
+    notifyListeners();
   }
 
   Future<void> deleteRule(String ruleId) async {
-    await _db.deleteRule(ruleId);
-    await loadLists();
+    final list = _lists.firstWhere(
+      (candidate) => candidate.rules.any((rule) => rule.id == ruleId),
+    );
+    await _repository.deleteRule(ruleId);
+    list.rules.removeWhere((rule) => rule.id == ruleId);
+    notifyListeners();
   }
 
   // ── Item membership ────────────────────────────────────────────────────────
 
   Future<List<Item>> getItemsForList(String listId) =>
-      _db.getItemsForList(listId);
+      _repository.getItemsForList(listId);
 
   /// After an item is added / updated, check all list rules via C++ and
   /// update list membership accordingly.
@@ -77,10 +94,14 @@ class CustomListsProvider extends ChangeNotifier {
     for (final list in _lists) {
       final belongs = matchedIds.contains(list.id);
       if (belongs) {
-        await _db.addItemToList(list.id, item.id);
+        await _repository.addItemToList(list.id, item.id);
       } else {
-        await _db.removeItemFromList(list.id, item.id);
+        await _repository.removeItemFromList(list.id, item.id);
       }
     }
+  }
+
+  void _sortListsByName() {
+    _lists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 }

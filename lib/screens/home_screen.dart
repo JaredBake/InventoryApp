@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           _buildFilterChips(context),
-          Expanded(child: _buildItemList(context)),
+          Expanded(child: _buildRefreshableItemList(context)),
         ],
       ),
       floatingActionButton: _buildFab(context),
@@ -75,6 +75,11 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Theme.of(context).colorScheme.primary,
       foregroundColor: Colors.white,
       actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: 'Refresh',
+          onPressed: () => _refreshAllData(context),
+        ),
         IconButton(
           icon: Icon(_showSearch ? Icons.close : Icons.search),
           onPressed: () {
@@ -140,40 +145,50 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildItemList(BuildContext context) {
+  Widget _buildRefreshableItemList(BuildContext context) {
     final inv   = context.watch<InventoryProvider>();
     final items = inv.items;
 
-    if (items.isEmpty) {
-      return EmptyState(
-        icon: Icons.inventory_2_outlined,
-        message: inv.searchQuery.isNotEmpty || inv.filterCat.isNotEmpty
-            ? 'No items match your search.'
-            : 'Your inventory is empty.\nTap + to scan or add an item.',
-        actionLabel: inv.searchQuery.isNotEmpty || inv.filterCat.isNotEmpty
-            ? null
-            : 'Add item',
-        onAction: inv.searchQuery.isNotEmpty || inv.filterCat.isNotEmpty
-            ? null
-            : () => _showAddOptions(context),
-      );
-    }
+    return RefreshIndicator(
+      onRefresh: () => _refreshAllData(context),
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: items.isEmpty ? 1 : items.length,
+        itemBuilder: (ctx, i) {
+          if (items.isEmpty) {
+            return SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: Center(
+                child: EmptyState(
+                  icon: Icons.inventory_2_outlined,
+                  message: inv.searchQuery.isNotEmpty || inv.filterCat.isNotEmpty
+                      ? 'No items match your search.'
+                      : 'Your inventory is empty.\nTap + to scan or add an item.',
+                  actionLabel: inv.searchQuery.isNotEmpty ||
+                          inv.filterCat.isNotEmpty
+                      ? null
+                      : 'Add item',
+                  onAction: inv.searchQuery.isNotEmpty || inv.filterCat.isNotEmpty
+                      ? null
+                      : () => _showAddOptions(context),
+                ),
+              ),
+            );
+          }
 
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (ctx, i) {
-        final item = items[i];
-        return ItemCard(
-          item: item,
-          onTap: () => Navigator.push(context,
-              MaterialPageRoute(
-                  builder: (_) => ItemDetailScreen(item: item))),
-          onEdit: () => _openEdit(context, item: item),
-          onDelete: () => _confirmDelete(context, item),
-          onAdjustQuantity: (delta) =>
-              context.read<InventoryProvider>().adjustQuantity(item, delta),
-        );
-      },
+          final item = items[i];
+          return ItemCard(
+            item: item,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(
+                    builder: (_) => ItemDetailScreen(item: item))),
+            onEdit: () => _openEdit(context, item: item),
+            onDelete: () => _confirmDelete(context, item),
+            onAdjustQuantity: (delta) =>
+                context.read<InventoryProvider>().adjustQuantity(item, delta),
+          );
+        },
+      ),
     );
   }
 
@@ -242,5 +257,12 @@ class _HomeScreenState extends State<HomeScreen> {
     if (confirmed == true && context.mounted) {
       context.read<InventoryProvider>().deleteItem(item.id);
     }
+  }
+
+  Future<void> _refreshAllData(BuildContext context) async {
+    await Future.wait([
+      context.read<InventoryProvider>().loadItems(),
+      context.read<CustomListsProvider>().loadLists(),
+    ]);
   }
 }

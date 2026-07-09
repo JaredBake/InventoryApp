@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/item.dart';
-import '../services/database_service.dart';
+import '../repositories/inventory_repository.dart';
 import '../services/inventory_ffi_service.dart';
 
 /// Holds the full inventory state and exposes mutating operations.
 class InventoryProvider extends ChangeNotifier {
-  final DatabaseService    _db;
+  final InventoryRepository _repository;
   final InventoryFfiService _ffi;
 
   List<Item> _allItems    = [];
@@ -20,9 +20,9 @@ class InventoryProvider extends ChangeNotifier {
   List<String> _categories = [];
 
   InventoryProvider({
-    required DatabaseService    db,
+    required InventoryRepository repository,
     required InventoryFfiService ffi,
-  })  : _db  = db,
+  })  : _repository = repository,
         _ffi = ffi;
 
   // ── Getters ────────────────────────────────────────────────────────────────
@@ -37,8 +37,8 @@ class InventoryProvider extends ChangeNotifier {
   // ── Init ───────────────────────────────────────────────────────────────────
 
   Future<void> loadItems() async {
-    _allItems   = await _db.getAllItems();
-    _categories = await _db.getAllCategories();
+    _allItems   = await _repository.getAllItems();
+    _categories = await _repository.getAllCategories();
     _applyFiltersAndSort();
     notifyListeners();
   }
@@ -46,7 +46,7 @@ class InventoryProvider extends ChangeNotifier {
   // ── CRUD ───────────────────────────────────────────────────────────────────
 
   Future<void> addItem(Item item) async {
-    await _db.insertItem(item);
+    await _repository.insertItem(item);
     _allItems.add(item);
     _syncCategoriesFromItems();
     _applyFiltersAndSort();
@@ -54,7 +54,7 @@ class InventoryProvider extends ChangeNotifier {
   }
 
   Future<void> updateItem(Item item) async {
-    await _db.updateItem(item);
+    await _repository.updateItem(item);
     final index = _allItems.indexWhere((existing) => existing.id == item.id);
     if (index >= 0) {
       _allItems[index] = item;
@@ -67,7 +67,7 @@ class InventoryProvider extends ChangeNotifier {
   }
 
   Future<void> deleteItem(String id) async {
-    await _db.deleteItem(id);
+    await _repository.deleteItem(id);
     _allItems.removeWhere((item) => item.id == id);
     _syncCategoriesFromItems();
     _applyFiltersAndSort();
@@ -75,7 +75,7 @@ class InventoryProvider extends ChangeNotifier {
   }
 
   Future<Item?> getItemByBarcode(String barcode) =>
-      _db.getItemByBarcode(barcode);
+      _repository.getItemByBarcode(barcode);
 
   /// Increment the quantity of an existing item by [delta] (default 1).
   Future<void> adjustQuantity(Item item, int delta) async {
