@@ -3,12 +3,15 @@ import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
 
+import 'providers/auth_provider.dart';
 import 'providers/inventory_provider.dart';
 import 'providers/custom_lists_provider.dart';
 import 'repositories/database_custom_lists_repository.dart';
 import 'repositories/database_inventory_repository.dart';
+import 'screens/sign_in_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/database_service.dart';
+import 'services/local_auth_service.dart';
 import 'services/inventory_ffi_service.dart';
 
 Future<void> main() async {
@@ -31,6 +34,9 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(service: LocalAuthService()),
+        ),
         ChangeNotifierProvider(
           create: (_) => InventoryProvider(
             repository: inventoryRepository,
@@ -63,7 +69,28 @@ class InventoryApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const _AuthGate(),
     );
+  }
+}
+
+class _AuthGate extends StatelessWidget {
+  const _AuthGate();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    if (auth.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!auth.isSignedIn) {
+      return const SignInScreen();
+    }
+
+    return const HomeScreen();
   }
 }

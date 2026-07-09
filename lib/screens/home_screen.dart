@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/item.dart';
+import '../providers/auth_provider.dart';
 import '../providers/inventory_provider.dart';
 import '../providers/custom_lists_provider.dart';
 import '../widgets/item_card.dart';
@@ -75,6 +76,11 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Theme.of(context).colorScheme.primary,
       foregroundColor: Colors.white,
       actions: [
+        IconButton(
+          icon: const Icon(Icons.logout),
+          tooltip: 'Sign out',
+          onPressed: () => context.read<AuthProvider>().signOut(),
+        ),
         IconButton(
           icon: const Icon(Icons.refresh),
           tooltip: 'Refresh',

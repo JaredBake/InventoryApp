@@ -28,6 +28,9 @@ dependencies:
   # Lightweight state management
   provider: ^6.1.2
 
+  # Local persistence for the sign-in session during development
+  shared_preferences: ^2.2.3
+
   # C FFI support (dart:ffi is built-in; this package adds helpers)
   ffi: ^2.1.3
 
