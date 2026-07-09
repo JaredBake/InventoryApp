@@ -110,7 +110,7 @@ class DatabaseService {
   Future<List<String>> getAllCategories() async {
     final d = await db;
     final rows = await d.rawQuery(
-        'SELECT DISTINCT category FROM items WHERE category != "" ORDER BY category ASC');
+        "SELECT DISTINCT category FROM items WHERE category <> '' AND TRIM(category) <> '' ORDER BY category ASC");
     return rows.map((r) => r['category'] as String).toList();
   }
 

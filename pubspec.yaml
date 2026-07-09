@@ -22,6 +22,9 @@ dependencies:
   # Access to device file-system paths (for DB location)
   path_provider: ^2.1.4
 
+  # Path utilities for joining database paths
+  path: ^1.9.1
+
   # Lightweight state management
   provider: ^6.1.2
 

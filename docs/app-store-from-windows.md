@@ -20,6 +20,7 @@ This project can be published to the App Store from a Windows laptop by using a 
 2. Set a unique Bundle ID in Apple Developer and use the same value in App Store Connect.
 3. Create an App Store Connect API key with access to Certificates, Identifiers and Profiles.
 4. In Codemagic, create an App Store Connect integration using that API key.
+5. Use the checklist in `docs/codemagic-setup-checklist.md` to gather the exact values.
 
 ## One-time repository setup
 
@@ -28,12 +29,21 @@ This project can be published to the App Store from a Windows laptop by using a 
 3. Replace `com.example.inventoryapp` with your real bundle identifier.
 4. Commit and push these changes to `main`.
 
+## Recommended build order
+
+1. Run workflow `ios-validation` first.
+2. Fix any compile or dependency issues it reports.
+3. Run workflow `ios-app-store` after the validation build passes.
+
 ## First iOS build from Windows
 
-1. In Codemagic, open this app and start workflow `ios-app-store`.
-2. Wait for build and signing to finish.
-3. Verify the IPA artifact is produced.
-4. Confirm upload to TestFlight succeeded.
+1. In Codemagic, open this app and start workflow `ios-validation`.
+2. Wait for the compile-only build to finish.
+3. Confirm the iOS app compiles cleanly with no signing errors.
+4. Then start workflow `ios-app-store`.
+5. Wait for build and signing to finish.
+6. Verify the IPA artifact is produced.
+7. Confirm upload to TestFlight succeeded.
 
 ## TestFlight to App Store
 
@@ -58,3 +68,10 @@ This project can be published to the App Store from a Windows laptop by using a 
 
 - You can keep all feature development on Windows.
 - iOS compile/sign/distribution is handled by Codemagic macOS runners.
+
+## Next backend step
+
+If you want account sign-in and cloud sync, start with:
+
+- Cloud architecture plan: `docs/cloud-architecture-plan.md`
+- Starter SQL schema: `docs/supabase-schema.sql`

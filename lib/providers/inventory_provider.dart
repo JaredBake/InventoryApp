@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/item.dart';
-import '../models/custom_list_model.dart';
 import '../services/database_service.dart';
 import '../services/inventory_ffi_service.dart';
 
@@ -48,17 +47,31 @@ class InventoryProvider extends ChangeNotifier {
 
   Future<void> addItem(Item item) async {
     await _db.insertItem(item);
-    await loadItems();
+    _allItems.add(item);
+    _syncCategoriesFromItems();
+    _applyFiltersAndSort();
+    notifyListeners();
   }
 
   Future<void> updateItem(Item item) async {
     await _db.updateItem(item);
-    await loadItems();
+    final index = _allItems.indexWhere((existing) => existing.id == item.id);
+    if (index >= 0) {
+      _allItems[index] = item;
+    } else {
+      _allItems.add(item);
+    }
+    _syncCategoriesFromItems();
+    _applyFiltersAndSort();
+    notifyListeners();
   }
 
   Future<void> deleteItem(String id) async {
     await _db.deleteItem(id);
-    await loadItems();
+    _allItems.removeWhere((item) => item.id == id);
+    _syncCategoriesFromItems();
+    _applyFiltersAndSort();
+    notifyListeners();
   }
 
   Future<Item?> getItemByBarcode(String barcode) =>
@@ -115,5 +128,16 @@ class InventoryProvider extends ChangeNotifier {
     result = _ffi.sortItems(result, _sortField, ascending: _ascending);
 
     _displayItems = result;
+  }
+
+  void _syncCategoriesFromItems() {
+    final categories = <String>{};
+    for (final item in _allItems) {
+      final category = item.category.trim();
+      if (category.isNotEmpty) {
+        categories.add(category);
+      }
+    }
+    _categories = categories.toList()..sort();
   }
 }

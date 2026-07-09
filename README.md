@@ -191,6 +191,8 @@ signing or deployment targets.
 
 If you do not have a Mac, you can still ship to the App Store by using cloud macOS CI.
 
+- Validation workflow: `ios-validation`
+- App Store workflow: `ios-app-store`
 - Pipeline template: `codemagic.yaml`
 - Step-by-step guide: `docs/app-store-from-windows.md`
 
