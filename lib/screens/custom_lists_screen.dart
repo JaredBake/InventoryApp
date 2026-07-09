@@ -5,6 +5,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../models/custom_list_model.dart';
 import '../providers/custom_lists_provider.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/confirm_delete_dialog.dart';
 import 'custom_list_detail_screen.dart';
 
 class CustomListsScreen extends StatelessWidget {
@@ -18,10 +19,12 @@ class CustomListsScreen extends StatelessWidget {
         builder: (ctx, provider, _) {
           final lists = provider.lists;
           if (lists.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.playlist_add,
               message:
-                  'No custom lists yet.\nTap + to create one.',
+                  'No custom lists yet.\nCreate one so items can be grouped automatically.',
+              actionLabel: 'Create list',
+              onAction: () => _showCreateDialog(context),
             );
           }
           return ListView.builder(
@@ -117,20 +120,10 @@ class CustomListsScreen extends StatelessWidget {
 
   Future<void> _confirmDelete(BuildContext context,
       CustomListsProvider provider, CustomList list) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete list?'),
-        content: Text('Delete "${list.name}"?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete')),
-        ],
-      ),
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      title: 'Delete list?',
+      message: 'Delete "${list.name}" and its rules?',
     );
     if (confirmed == true) provider.deleteList(list.id);
   }

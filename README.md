@@ -2,6 +2,19 @@
 
 A barcode-scanning grocery/product inventory app built with **Flutter** and a **C++** business-logic core.
 
+## Supported Platforms
+
+This app is intended to be used on:
+- iPhone
+- iPad
+- Android
+
+Non-goals:
+- Web support
+- Browser-based deployment
+
+Desktop platforms may be useful for local development and testing, but they are not the primary product targets.
+
 ---
 
 ## Features
@@ -171,4 +184,13 @@ flutter run
 
 Open `ios/Runner.xcworkspace` (not `.xcodeproj`) in Xcode if you need to configure
 signing or deployment targets.
+
+---
+
+## App Store release from Windows
+
+If you do not have a Mac, you can still ship to the App Store by using cloud macOS CI.
+
+- Pipeline template: `codemagic.yaml`
+- Step-by-step guide: `docs/app-store-from-windows.md`
 

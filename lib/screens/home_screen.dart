@@ -7,6 +7,7 @@ import '../providers/custom_lists_provider.dart';
 import '../widgets/item_card.dart';
 import '../widgets/sort_bottom_sheet.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/confirm_delete_dialog.dart';
 import 'scanner_screen.dart';
 import 'item_detail_screen.dart';
 import 'edit_item_screen.dart';
@@ -149,6 +150,12 @@ class _HomeScreenState extends State<HomeScreen> {
         message: inv.searchQuery.isNotEmpty || inv.filterCat.isNotEmpty
             ? 'No items match your search.'
             : 'Your inventory is empty.\nTap + to scan or add an item.',
+        actionLabel: inv.searchQuery.isNotEmpty || inv.filterCat.isNotEmpty
+            ? null
+            : 'Add item',
+        onAction: inv.searchQuery.isNotEmpty || inv.filterCat.isNotEmpty
+            ? null
+            : () => _showAddOptions(context),
       );
     }
 
@@ -227,20 +234,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _confirmDelete(BuildContext context, Item item) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete item?'),
-        content: Text('Remove "${item.name}" from inventory?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete')),
-        ],
-      ),
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      title: 'Delete item?',
+      message: 'Remove "${item.name}" from inventory?',
     );
     if (confirmed == true && context.mounted) {
       context.read<InventoryProvider>().deleteItem(item.id);

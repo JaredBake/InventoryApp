@@ -90,9 +90,12 @@ class _CustomListDetailScreenState
   Widget _buildItemsTab() {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_listItems.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.inventory_2_outlined,
-        message: 'No items in this list yet.\nAdd rules to auto-populate it.',
+        message:
+            'No items in this list yet.\nAdd rules to auto-populate it.',
+        actionLabel: 'Add rule',
+        onAction: () => _tabs.animateTo(1),
       );
     }
     return ListView.builder(
@@ -113,10 +116,12 @@ class _CustomListDetailScreenState
   Widget _buildRulesTab(BuildContext context, CustomList list,
       CustomListsProvider provider) {
     if (list.rules.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.rule,
         message:
             'No rules yet.\nTap + to add a rule.\nItems will be auto-added when they match.',
+        actionLabel: 'Add rule',
+        onAction: () => _showAddRuleDialog(context, list),
       );
     }
     return ListView.builder(
@@ -151,7 +156,7 @@ class _CustomListDetailScreenState
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<MatchType>(
-                value: selectedType,
+                initialValue: selectedType,
                 decoration: const InputDecoration(
                     labelText: 'Match type',
                     border: OutlineInputBorder()),

@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 /// Placeholder shown when a list is empty.
 class EmptyState extends StatelessWidget {
   final IconData icon;
-  final String   message;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   const EmptyState({
     super.key,
     required this.icon,
     required this.message,
+    this.actionLabel,
+    this.onAction,
   });
 
   @override
@@ -37,6 +41,14 @@ class EmptyState extends StatelessWidget {
                     .withAlpha(180),
               ),
             ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: onAction,
+                icon: const Icon(Icons.add),
+                label: Text(actionLabel!),
+              ),
+            ],
           ],
         ),
       ),

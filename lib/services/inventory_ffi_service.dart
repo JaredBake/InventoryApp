@@ -5,32 +5,27 @@ import 'package:ffi/ffi.dart';
 
 import '../models/item.dart';
 import '../models/custom_list_model.dart';
+import 'native_contract.dart';
 
 // ── C struct field sizes (must match cpp/include/item.h) ────────────────────
-
-const int _kIdLen      = 64;
-const int _kBarcodeLen = 64;
-const int _kNameLen    = 256;
-const int _kCatLen     = 128;
-const int _kDescLen    = 512;
 
 // ── Dart FFI struct mirrors ──────────────────────────────────────────────────
 
 /// Mirrors the packed CItem struct in cpp/include/item.h.
 final class CItem extends Struct {
-  @Array(_kIdLen)
+  @Array(kNativeItemIdLen)
   external Array<Char> id;
 
-  @Array(_kBarcodeLen)
+  @Array(kNativeBarcodeLen)
   external Array<Char> barcode;
 
-  @Array(_kNameLen)
+  @Array(kNativeNameLen)
   external Array<Char> name;
 
-  @Array(_kCatLen)
+  @Array(kNativeCategoryLen)
   external Array<Char> category;
 
-  @Array(_kDescLen)
+  @Array(kNativeDescriptionLen)
   external Array<Char> description;
 
   @Double()
@@ -49,10 +44,10 @@ final class CItem extends Struct {
 
 /// Mirrors the packed CRule struct in cpp/include/item.h.
 final class CRule extends Struct {
-  @Array(_kIdLen)
+  @Array(kNativeItemIdLen)
   external Array<Char> listId;
 
-  @Array(_kNameLen)
+  @Array(kNativeNameLen)
   external Array<Char> value;
 
   @Int32()
@@ -196,7 +191,7 @@ class InventoryFfiService {
     final itemPtr = calloc<CItem>();
     final rulesPtr = calloc<CRule>(rules.length);
     // Each slot in out_list_ids is ITEM_ID_LEN bytes wide.
-    final outPtr = calloc<Uint8>(rules.length * _kIdLen);
+    final outPtr = calloc<Uint8>(rules.length * kNativeItemIdLen);
     try {
       _fillCItem(itemPtr.ref, item);
       for (var i = 0; i < rules.length; i++) {
@@ -208,8 +203,8 @@ class InventoryFfiService {
       final result = <String>[];
       for (var i = 0; i < count; i++) {
         final bytes = <int>[];
-        for (var j = 0; j < _kIdLen; j++) {
-          final b = outPtr[i * _kIdLen + j];
+        for (var j = 0; j < kNativeItemIdLen; j++) {
+          final b = outPtr[i * kNativeItemIdLen + j];
           if (b == 0) break;
           bytes.add(b);
         }
@@ -244,11 +239,11 @@ class InventoryFfiService {
   }
 
   void _fillCItem(CItem c, Item item) {
-    _copyStr(c.id, item.id, _kIdLen);
-    _copyStr(c.barcode, item.barcode, _kBarcodeLen);
-    _copyStr(c.name, item.name, _kNameLen);
-    _copyStr(c.category, item.category, _kCatLen);
-    _copyStr(c.description, item.description, _kDescLen);
+    _copyStr(c.id, item.id, kNativeItemIdLen);
+    _copyStr(c.barcode, item.barcode, kNativeBarcodeLen);
+    _copyStr(c.name, item.name, kNativeNameLen);
+    _copyStr(c.category, item.category, kNativeCategoryLen);
+    _copyStr(c.description, item.description, kNativeDescriptionLen);
     c.price     = item.price;
     c.dateAdded = item.dateAdded.millisecondsSinceEpoch;
     c.quantity  = item.quantity;
@@ -257,11 +252,11 @@ class InventoryFfiService {
 
   Item _itemFromCItem(CItem c) {
     return Item(
-      id:          _readStr(c.id,          _kIdLen),
-      barcode:     _readStr(c.barcode,     _kBarcodeLen),
-      name:        _readStr(c.name,        _kNameLen),
-      category:    _readStr(c.category,    _kCatLen),
-      description: _readStr(c.description, _kDescLen),
+      id:          _readStr(c.id,          kNativeItemIdLen),
+      barcode:     _readStr(c.barcode,     kNativeBarcodeLen),
+      name:        _readStr(c.name,        kNativeNameLen),
+      category:    _readStr(c.category,    kNativeCategoryLen),
+      description: _readStr(c.description, kNativeDescriptionLen),
       price:       c.price,
       quantity:    c.quantity,
       dateAdded:   DateTime.fromMillisecondsSinceEpoch(c.dateAdded),
@@ -269,8 +264,8 @@ class InventoryFfiService {
   }
 
   void _fillCRule(CRule c, ListRule rule) {
-    _copyStr(c.listId, rule.listId, _kIdLen);
-    _copyStr(c.value,  rule.value,  _kNameLen);
+    _copyStr(c.listId, rule.listId, kNativeItemIdLen);
+    _copyStr(c.value,  rule.value,  kNativeNameLen);
     c.matchType = rule.matchType.index;
     c.pad       = 0;
   }

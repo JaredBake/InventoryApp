@@ -37,7 +37,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     _name        = TextEditingController(text: item?.name        ?? '');
     _category    = TextEditingController(text: item?.category    ?? '');
     _description = TextEditingController(text: item?.description ?? '');
-    _quantity    = TextEditingController(text: '${item?.quantity ?? 0}');
+    _quantity    = TextEditingController(text: '${item?.quantity ?? 1}');
     _price       = TextEditingController(
         text: item != null ? item.price.toStringAsFixed(2) : '0.00');
   }
@@ -61,20 +61,37 @@ class _EditItemScreenState extends State<EditItemScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _field(_barcode, 'Barcode', hint: 'e.g. 012345678901',
+            _field(_barcode, 'Barcode / SKU', hint: 'Scan or enter the code',
+                textInputAction: TextInputAction.next,
                 validator: (v) =>
                     v == null || v.trim().isEmpty ? 'Enter a barcode' : null),
             _field(_name, 'Item name',
+                hint: 'What should people call this item?',
+                textInputAction: TextInputAction.next,
+                textCapitalization: TextCapitalization.words,
                 validator: (v) =>
                     v == null || v.trim().isEmpty ? 'Enter a name' : null),
-            _field(_category, 'Category',
-                hint: 'e.g. Dairy, Snacks, Beverages'),
-            _field(_description, 'Description',
-                maxLines: 3, hint: 'Optional notes'),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(top: 4),
+              title: const Text('Optional details'),
+              subtitle: const Text('Category and notes'),
+              children: [
+                _field(_category, 'Category',
+                    hint: 'Dairy, Snacks, Beverages',
+                    textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.words),
+                _field(_description, 'Description',
+                    maxLines: 3,
+                    hint: 'Optional notes about the item',
+                    textCapitalization: TextCapitalization.sentences),
+              ],
+            ),
             Row(
               children: [
                 Expanded(
                   child: _field(_quantity, 'Quantity',
+                      hint: '1',
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (v) {
@@ -87,6 +104,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: _field(_price, 'Price (\$)',
+                      hint: '0.00',
                       keyboardType: const TextInputType.numberWithOptions(
                           decimal: true),
                       inputFormatters: [
@@ -122,6 +140,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    TextInputAction? textInputAction,
+    TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -136,6 +156,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
         validator: validator,
+        textInputAction: textInputAction,
+        textCapitalization: textCapitalization,
       ),
     );
   }
@@ -173,6 +195,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     // Automatically place the item into any matching custom list
     await lists.applyRulesToItem(item);
 
-    if (context.mounted) Navigator.pop(context);
+    if (!mounted) return;
+    Navigator.pop(context);
   }
 }

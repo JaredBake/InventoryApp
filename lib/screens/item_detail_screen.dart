@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/item.dart';
 import '../providers/inventory_provider.dart';
-import '../providers/custom_lists_provider.dart';
+import '../widgets/confirm_delete_dialog.dart';
 import 'edit_item_screen.dart';
 
 class ItemDetailScreen extends StatelessWidget {
@@ -52,20 +52,10 @@ class ItemDetailScreen extends StatelessWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, Item item) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete item?'),
-        content: Text('Remove "${item.name}" from inventory?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete')),
-        ],
-      ),
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      title: 'Delete item?',
+      message: 'Remove "${item.name}" from inventory?',
     );
     if (confirmed == true && context.mounted) {
       context.read<InventoryProvider>().deleteItem(item.id);
