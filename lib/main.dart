@@ -157,6 +157,12 @@ class _AuthGateState extends State<_AuthGate> {
       });
     }
 
+    final previousSession = _lastSyncedSession;
+
+    if (session == null && previousSession != null) {
+      await widget.databaseService.deleteScopeData(previousSession.email);
+    }
+
     await widget.databaseService.setScopeKey(session?.email);
 
     if (!mounted) return;
