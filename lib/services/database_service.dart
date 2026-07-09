@@ -27,22 +27,6 @@ class DatabaseService {
     _scopeKey = normalized;
   }
 
-  Future<void> deleteScopeData(String? scopeKey) async {
-    final normalized = _normalizeScopeKey(scopeKey);
-    if (normalized.isEmpty) {
-      return;
-    }
-
-    final dbName = 'inventory_${normalized}.db';
-    final dbPath = path.join(await getDatabasesPath(), dbName);
-
-    if (_scopeKey == normalized) {
-      await close();
-    }
-
-    await deleteDatabase(dbPath);
-  }
-
   Future<Database> _openDatabase() async {
     final dbName = _scopeKey.isEmpty
         ? _guestDbName

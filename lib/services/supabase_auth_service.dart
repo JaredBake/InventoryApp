@@ -61,6 +61,7 @@ class SupabaseAuthService implements AuthService {
     }
 
     return AuthSession(
+      userId: session.user.id,
       email: session.user.email!.trim().toLowerCase(),
       signedInAt: DateTime.now(),
     );

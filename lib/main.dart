@@ -133,8 +133,8 @@ class _AuthGateState extends State<_AuthGate> {
 
   void _handleAuthChanged() {
     final auth = context.read<AuthProvider>();
-    final currentKey = auth.session?.email ?? '';
-    final lastKey = _lastSyncedSession?.email ?? '';
+    final currentKey = auth.session?.storageKey ?? '';
+    final lastKey = _lastSyncedSession?.storageKey ?? '';
     if (currentKey == lastKey || _syncing) {
       return;
     }
@@ -145,8 +145,8 @@ class _AuthGateState extends State<_AuthGate> {
   Future<void> _syncAccountData() async {
     final auth = context.read<AuthProvider>();
     final session = auth.session;
-    final currentKey = session?.email ?? '';
-    final lastKey = _lastSyncedSession?.email ?? '';
+    final currentKey = session?.storageKey ?? '';
+    final lastKey = _lastSyncedSession?.storageKey ?? '';
     if (currentKey == lastKey && !_syncing) {
       return;
     }
@@ -157,13 +157,7 @@ class _AuthGateState extends State<_AuthGate> {
       });
     }
 
-    final previousSession = _lastSyncedSession;
-
-    if (session == null && previousSession != null) {
-      await widget.databaseService.deleteScopeData(previousSession.email);
-    }
-
-    await widget.databaseService.setScopeKey(session?.email);
+    await widget.databaseService.setScopeKey(session?.storageKey);
 
     if (!mounted) return;
 
@@ -186,17 +180,46 @@ class _AuthGateState extends State<_AuthGate> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final content = auth.isSignedIn ? const HomeScreen() : const SignInScreen();
 
-    if (auth.isLoading || _syncing) {
+    if (auth.isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (!auth.isSignedIn) {
-      return const SignInScreen();
+    if (_syncing) {
+      return Stack(
+        children: [
+          content,
+          const ModalBarrier(
+            dismissible: false,
+            color: Color(0xAA000000),
+          ),
+          const Center(
+            child: Card(
+              elevation: 8,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Switching accounts...'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
     }
 
-    return const HomeScreen();
+    return content;
   }
 }

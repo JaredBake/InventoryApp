@@ -83,7 +83,11 @@ class LocalAuthService implements AuthService {
   }
 
   Future<AuthSession> _writeSession(String email) async {
-    final session = AuthSession(email: email, signedInAt: DateTime.now());
+    final session = AuthSession(
+      userId: email,
+      email: email,
+      signedInAt: DateTime.now(),
+    );
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_sessionKey, jsonEncode(session.toJson()));
     return session;
