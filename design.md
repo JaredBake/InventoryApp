@@ -354,3 +354,98 @@ cd /c/Users/18jab/Projects/InventoryApp/InventoryApp
 - Press `r` in the running terminal for hot reload.
 - Press `R` for hot restart.
 - Press `q` to quit the app.
+
+---
+
+## 15) App Store Compliance Design Requirements
+
+This section updates the architecture and release workflow so the app remains compliant with Apple Developer Program terms, TestFlight restrictions, and App Store review expectations.
+
+### 15.1 Distribution and Product Scope
+
+- Default distribution path remains App Store + TestFlight only.
+- TestFlight builds are for beta evaluation only and cannot be used as long-term production distribution.
+- Current release model is free app distribution unless and until Schedule 2 (paid apps / paid digital content) is completed.
+- If paid digital content is introduced later, release must be blocked until payment/legal onboarding is complete.
+
+### 15.2 Privacy, Data, and User Consent Requirements
+
+- A public privacy policy must exist and match actual app behavior for camera, account, and analytics-related data handling.
+- Any analytics or diagnostic data must be used only for quality and performance improvements.
+- App behavior must avoid attempts to de-anonymize users from aggregate diagnostics.
+- TestFlight invite/contact handling must allow immediate stop-contact compliance on user request.
+
+### 15.3 Compatibility and Maintenance Requirements
+
+- Each iOS release cycle must include a compatibility test pass before submission.
+- The app must stay compatible with currently shipping iOS versions while listed on the App Store.
+- Release checklist must include simulator + physical-device smoke tests for scanner, auth, inventory CRUD, and custom lists.
+
+### 15.4 TestFlight Constraints (Design-Time Rules)
+
+- External TestFlight builds must pass Apple beta review before distribution.
+- TestFlight builds cannot charge beta testers and cannot provide paid digital purchases.
+- TestFlight should not be used to circumvent App Store release rules (e.g., perpetual demo distribution).
+- If app is intended primarily for children, beta tester age-of-majority verification must be enforced in release operations.
+
+### 15.5 In-App Purchase Guardrails (Future)
+
+- Digital goods or premium features must use Apple in-app purchase flows when required by policy.
+- No architecture decisions should assume external digital payment rails inside the iOS app UI.
+- Any future premium feature spec must include:
+  - product type (consumable / non-consumable / subscription),
+  - App Store Connect product IDs,
+  - entitlement unlock logic,
+  - restore-purchase behavior,
+  - refund and receipt-validation handling.
+
+### 15.6 Security and Certificate/Signing Resilience
+
+- Signing keys, certificates, and provisioning profiles are treated as critical secrets and stored only in approved secret managers.
+- CI/CD must support emergency certificate rotation without code changes.
+- If certificate revocation occurs, release and update pipelines must halt until credentials are re-issued and verified.
+
+### 15.7 Submission and Review Transparency
+
+- App submissions must not hide functionality or gate reviewer access behind undisclosed flows.
+- Hardware-linked features (barcode scanner/camera behavior) must remain reproducible for review.
+- Metadata, screenshots, and app description must accurately represent current build behavior.
+
+### 15.8 Export/Regulatory and Regional Controls
+
+- Release process must include an export-compliance declaration check before App Store submission.
+- Regional availability decisions should be tracked in release notes/config and reflected in App Store Connect settings.
+
+### 15.9 Operational Release Gates (Must-Pass)
+
+Before promoting any iOS build beyond internal testing:
+
+1. Legal/Program Gate
+	- Active Apple Developer membership and accepted current agreements.
+	- Correct agreement schedule status for free vs paid distribution model.
+
+2. Security/Secrets Gate
+	- Valid signing certificate + provisioning profile + API key.
+	- Secrets present in CI and validated by dry-run workflow.
+
+3. Product/Policy Gate
+	- Privacy policy URL and support URL are active.
+	- App metadata and age rating are complete.
+	- No prohibited payment path or beta misuse pattern.
+
+4. Technical Gate
+	- Latest compatibility test pass complete.
+	- Critical flow regression pass complete: sign in, add/edit/delete, scanner, custom lists.
+	- Crash/ANR threshold acceptable for release.
+
+### 15.10 Repository-Level Compliance Artifacts
+
+The following artifacts are part of the required release baseline:
+
+- `.github/workflows/ios-validation.yml`
+- `.github/workflows/ios-app-store.yml`
+- `.github/workflows/ios-app-store-submit.yml`
+- `docs/github-actions-app-store.md`
+- `docs/apple_license_document.md`
+
+Any change to distribution, payments, identity, or data collection must update this design section and the release checklist before merge.

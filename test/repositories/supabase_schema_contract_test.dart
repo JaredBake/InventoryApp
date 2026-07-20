@@ -30,5 +30,22 @@ void main() {
       expect(schema, contains('using (auth.uid() = user_id)'));
       expect(schema, contains('with check (auth.uid() = user_id);'));
     });
+
+    test('enforces auth.uid based RLS on all user-owned tables', () {
+      expect(schema, contains('alter table public.profiles enable row level security;'));
+      expect(schema, contains('create policy "profiles are owned by the signed-in user"'));
+
+      expect(schema, contains('alter table public.custom_lists enable row level security;'));
+      expect(schema, contains('create policy "custom lists are owned by the signed-in user"'));
+
+      expect(schema, contains('alter table public.list_rules enable row level security;'));
+      expect(schema, contains('create policy "list rules are owned by the signed-in user"'));
+
+      expect(schema, contains('alter table public.list_items enable row level security;'));
+      expect(schema, contains('create policy "list items are owned by the signed-in user"'));
+
+      expect(schema, contains('alter table public.receipt_scans enable row level security;'));
+      expect(schema, contains('create policy "receipt scans are owned by the signed-in user"'));
+    });
   });
 }

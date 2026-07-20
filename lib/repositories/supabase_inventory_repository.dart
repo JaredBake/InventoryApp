@@ -15,8 +15,21 @@ class SupabasePostgrestInventoryExecutor implements SupabaseInventoryExecutor {
 
   SupabasePostgrestInventoryExecutor(this._client);
 
+  void _assertAuthorizedUserScope(String userId) {
+    final authUserId = _client.auth.currentUser?.id;
+    if (authUserId == null) {
+      throw StateError('No authenticated Supabase user is available.');
+    }
+    if (authUserId != userId) {
+      throw StateError(
+        'Supabase user scope mismatch. Auth user does not match requested user scope.',
+      );
+    }
+  }
+
   @override
   Future<List<Map<String, dynamic>>> selectItemsByUser(String userId) async {
+    _assertAuthorizedUserScope(userId);
     final rows = await _client
         .from('items')
         .select(
@@ -29,11 +42,13 @@ class SupabasePostgrestInventoryExecutor implements SupabaseInventoryExecutor {
 
   @override
   Future<void> upsertItem(Map<String, dynamic> row) async {
+    _assertAuthorizedUserScope(row['user_id'] as String);
     await _client.from('items').upsert(row);
   }
 
   @override
   Future<void> deleteItemByIdAndUser(String id, String userId) async {
+    _assertAuthorizedUserScope(userId);
     await _client.from('items').delete().eq('id', id).eq('user_id', userId);
   }
 
@@ -42,6 +57,7 @@ class SupabasePostgrestInventoryExecutor implements SupabaseInventoryExecutor {
     String userId,
     String barcode,
   ) async {
+    _assertAuthorizedUserScope(userId);
     final rows = await _client
         .from('items')
         .select(
