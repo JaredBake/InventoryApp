@@ -8,8 +8,12 @@ import 'providers/auth_provider.dart';
 import 'providers/inventory_provider.dart';
 import 'providers/custom_lists_provider.dart';
 import 'models/auth_session.dart';
+import 'repositories/custom_lists_repository.dart';
 import 'repositories/database_custom_lists_repository.dart';
 import 'repositories/database_inventory_repository.dart';
+import 'repositories/inventory_repository.dart';
+import 'repositories/supabase_custom_lists_repository.dart';
+import 'repositories/supabase_inventory_repository.dart';
 import 'screens/sign_in_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/database_service.dart';
@@ -31,6 +35,7 @@ Future<void> main() async {
   final ffi = InventoryFfiService()..load();
 
   final authService = await _buildAuthService();
+  final useSupabaseData = authService is SupabaseAuthService;
 
   // Open (or create) the local database.
   final db = DatabaseService();
@@ -56,15 +61,23 @@ Future<void> main() async {
           ),
         ),
       ],
-      child: InventoryApp(databaseService: db),
+      child: InventoryApp(
+        databaseService: db,
+        useSupabaseData: useSupabaseData,
+      ),
     ),
   );
 }
 
 class InventoryApp extends StatelessWidget {
   final DatabaseService databaseService;
+  final bool useSupabaseData;
 
-  const InventoryApp({super.key, required this.databaseService});
+  const InventoryApp({
+    super.key,
+    required this.databaseService,
+    required this.useSupabaseData,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +90,10 @@ class InventoryApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: _AuthGate(databaseService: databaseService),
+      home: _AuthGate(
+        databaseService: databaseService,
+        useSupabaseData: useSupabaseData,
+      ),
     );
   }
 }
@@ -89,7 +105,7 @@ Future<AuthService> _buildAuthService() async {
   if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
     await Supabase.initialize(
       url: supabaseUrl,
-      anonKey: supabaseAnonKey,
+      publishableKey: supabaseAnonKey,
     );
     return SupabaseAuthService();
   }
@@ -99,8 +115,12 @@ Future<AuthService> _buildAuthService() async {
 
 class _AuthGate extends StatefulWidget {
   final DatabaseService databaseService;
+  final bool useSupabaseData;
 
-  const _AuthGate({required this.databaseService});
+  const _AuthGate({
+    required this.databaseService,
+    required this.useSupabaseData,
+  });
 
   @override
   State<_AuthGate> createState() => _AuthGateState();
@@ -110,6 +130,16 @@ class _AuthGateState extends State<_AuthGate> {
   AuthSession? _lastSyncedSession;
   bool _syncing = false;
   AuthProvider? _authProvider;
+  late final InventoryRepository _localInventoryRepository;
+  late final CustomListsRepository _localCustomListsRepository;
+
+  @override
+  void initState() {
+    super.initState();
+    _localInventoryRepository = DatabaseInventoryRepository(widget.databaseService);
+    _localCustomListsRepository =
+        DatabaseCustomListsRepository(widget.databaseService);
+  }
 
   @override
   void didChangeDependencies() {
@@ -157,17 +187,42 @@ class _AuthGateState extends State<_AuthGate> {
       });
     }
 
-    await widget.databaseService.setScopeKey(session?.storageKey);
+    final inventoryProvider = context.read<InventoryProvider>();
+    final customListsProvider = context.read<CustomListsProvider>();
+
+    if (session == null) {
+      await inventoryProvider.setRepository(_localInventoryRepository);
+      await customListsProvider.setRepository(_localCustomListsRepository);
+      await widget.databaseService.setScopeKey(null);
+    } else if (widget.useSupabaseData && session.userId != null) {
+      final client = Supabase.instance.client;
+      await inventoryProvider.setRepository(
+        SupabaseInventoryRepository(
+          userId: session.userId!,
+          executor: SupabasePostgrestInventoryExecutor(client),
+        ),
+      );
+      await customListsProvider.setRepository(
+        SupabaseCustomListsRepository(
+          userId: session.userId!,
+          executor: SupabasePostgrestCustomListsExecutor(client),
+        ),
+      );
+    } else {
+      await inventoryProvider.setRepository(_localInventoryRepository);
+      await customListsProvider.setRepository(_localCustomListsRepository);
+      await widget.databaseService.setScopeKey(session.storageKey);
+    }
 
     if (!mounted) return;
 
     if (session == null) {
-      context.read<InventoryProvider>().clearItems();
-      context.read<CustomListsProvider>().clearLists();
+      inventoryProvider.clearItems();
+      customListsProvider.clearLists();
     } else {
-      await context.read<InventoryProvider>().loadItems();
+      await inventoryProvider.loadItems();
       if (!mounted) return;
-      await context.read<CustomListsProvider>().loadLists();
+      await customListsProvider.loadLists();
     }
 
     if (!mounted) return;

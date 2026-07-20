@@ -11,7 +11,7 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
 
   AuthProvider({required AuthService service}) : _service = service {
-    _restoreSession();
+    _startSignedOut();
   }
 
   AuthSession? get session => _session;
@@ -19,13 +19,14 @@ class AuthProvider extends ChangeNotifier {
   bool get isSignedIn => _session != null;
   String? get error => _error;
 
-  Future<void> _restoreSession() async {
+  Future<void> _startSignedOut() async {
     _loading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _session = await _service.restoreSession();
+      await _service.signOut();
+      _session = null;
     } catch (error) {
       _error = error.toString();
       _session = null;

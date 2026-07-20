@@ -7,7 +7,7 @@ import '../services/inventory_ffi_service.dart';
 
 /// Holds all custom lists and manages their rules / item membership.
 class CustomListsProvider extends ChangeNotifier {
-  final CustomListsRepository _repository;
+  CustomListsRepository _repository;
   final InventoryFfiService _ffi;
 
   List<CustomList> _lists = [];
@@ -17,6 +17,15 @@ class CustomListsProvider extends ChangeNotifier {
     required InventoryFfiService ffi,
   })  : _repository = repository,
         _ffi = ffi;
+
+  Future<void> setRepository(CustomListsRepository repository) async {
+    if (identical(_repository, repository)) {
+      return;
+    }
+    await _repository.close();
+    _repository = repository;
+    clearLists();
+  }
 
   List<CustomList> get lists => _lists;
 

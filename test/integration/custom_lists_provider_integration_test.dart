@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:inventory_app/models/custom_list_model.dart';
 import 'package:inventory_app/models/item.dart';
 import 'package:inventory_app/providers/custom_lists_provider.dart';
+import 'package:inventory_app/repositories/database_custom_lists_repository.dart';
 
 import '../test_support/fakes.dart';
 
@@ -14,7 +15,10 @@ void main() {
     setUp(() {
       db = FakeDatabaseService();
       ffi = FakeInventoryFfiService();
-      provider = CustomListsProvider(db: db, ffi: ffi);
+      provider = CustomListsProvider(
+        repository: DatabaseCustomListsRepository(db),
+        ffi: ffi,
+      );
 
       db.seedLists([
         CustomList(

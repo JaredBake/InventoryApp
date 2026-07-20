@@ -6,7 +6,7 @@ import '../services/inventory_ffi_service.dart';
 
 /// Holds the full inventory state and exposes mutating operations.
 class InventoryProvider extends ChangeNotifier {
-  final InventoryRepository _repository;
+  InventoryRepository _repository;
   final InventoryFfiService _ffi;
 
   List<Item> _allItems    = [];
@@ -24,6 +24,15 @@ class InventoryProvider extends ChangeNotifier {
     required InventoryFfiService ffi,
   })  : _repository = repository,
         _ffi = ffi;
+
+  Future<void> setRepository(InventoryRepository repository) async {
+    if (identical(_repository, repository)) {
+      return;
+    }
+    await _repository.close();
+    _repository = repository;
+    clearItems();
+  }
 
   // ── Getters ────────────────────────────────────────────────────────────────
 
